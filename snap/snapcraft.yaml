@@ -30,13 +30,57 @@ assumes: [snapd2.37]
 adopt-info: bpftrace
 
 parts:
+    # Build LLVM from source to avoid: https://bugs.llvm.org/show_bug.cgi?id=44870
+    llvm-11:
+        plugin: nil
+        build-packages:
+            - git
+            - devscripts
+            - debhelper
+            - cmake
+            - chrpath 
+            - texinfo 
+            - sharutils 
+            - libffi-dev 
+            - libedit-dev 
+            - libncurses5-dev 
+            - swig 
+            - python3-sphinx
+            - binutils-dev
+            - libjsoncpp-dev
+            - pkg-config
+            - lcov
+            - help2man
+            - zlib1g-dev
+            - g++-multilib
+            - libjs-mathjax
+            - python3-recommonmark
+            - doxygen
+            - gfortran
+            - ocaml-nox
+            - ocaml-findlib
+            - libctypes-ocaml-dev
+            - dh-exec
+            - dh-ocaml
+            - libpfm4-dev
+            - libz3-dev
+            - libobjc-7-dev
+        override-build: |
+            git clone https://github.com/llvm/llvm-project -b llvmorg-11.0.0
+            cd llvm-project/
+            mkdir build
+            cd build
+            cmake ../llvm/ -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DLLVM_LIBDIR_SUFFIX=/usr/lib/x86_64-linux-gnu -DLLVM_INSTALL_BINUTILS_SYMLINKS=ON -DLLVM_INSTALL_CCTOOLS_SYMLINKS=ON -DLLVM_INCLUDE_TOOLS=ON -DLLVM_BUILD_TOOLS=ON -DLLVM_ENABLE_THREADS=ON -DLLVM_INCLUDE_TESTS=OFF -DLLVM_BUILD_TESTS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_BUILD_EXAMPLES=OFF -DLLVM_BUILD_BENCHMARKS=OFF -DLLVM_ENABLE_ASSERTIONS=OFF -DLLVM_ENABLE_DOXYGEN=OFF -DLLVM_BUILD_DOCS=OFF -DLLVM_ENABLE_SPHINX=OFF -DBUILD_SHARED_LIBS=OFF -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi"
+            make install
     bcclibs3:
+        after:
+            - llvm-11
         source: https://github.com/iovisor/bcc.git
-        source-tag: v0.8.0
+        source-tag: v0.17.0
         plugin: cmake
         configflags:
             - -DLLVM_DEFINITIONS="-D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS"
-            - -DREVISION_LAST=v0.8.0
+            - -DREVISION_LAST=v0.17.0
             - -DBCC_KERNEL_HAS_SOURCE_DIR=1
             - -DPYTHON_CMD='python2;python3'
             - -DCMAKE_BUILD_PARALLEL_LEVEL=1
@@ -57,14 +101,6 @@ parts:
             - libelf-dev
             - zlib1g-dev
             - libfl-dev
-            - clang-7
-            - libclang-7-dev
-            - libclang-common-7-dev
-            - libclang1-7
-            - libllvm7
-            - llvm-7
-            - llvm-7-dev
-            - llvm-7-runtime
             - systemtap-sdt-dev
             - netperf
             - python3
@@ -79,10 +115,19 @@ parts:
             - python3-netaddr
             - python3-pyroute2
             - python3-distutils
-    bpftrace:
+    libbpf:
         after:
             - bcclibs3
+        plugin: nil
+        override-build: |
+            cd bcc/src/cc/libbpf/src
+            sudo make install
+            sudo ln -s /usr/include/bpf /usr/include/libbpf
+    bpftrace:
+        after:
+            - libbpf
         source: https://github.com/iovisor/bpftrace.git
+        source-tag: v0.11.4
         plugin: cmake
         configflags:
             - -DCMAKE_BUILD_TYPE=Release
@@ -107,14 +152,8 @@ parts:
           - libfl-dev
           - systemtap-sdt-dev
           - binutils-dev
-          - llvm-7-dev
-          - llvm-7-runtime
-          - libclang-7-dev
-          - clang-7
         stage-packages:
           - libbinutils
-          - libclang1-7
-          - libllvm7
 
 apps:
     bpftrace:
