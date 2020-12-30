@@ -24,61 +24,26 @@ description: BPFtrace is a high-level tracing language for
 
 confinement: strict
 grade: stable
-base: core18
+base: core20
 architectures: [amd64, arm64]
 assumes: [snapd2.37]
 adopt-info: bpftrace
 
+# Needs to add focal-proposed for llvm/clang-11
+package-repositories:
+  - type: apt
+    formats: [deb, deb-src]
+    components: [main, multiverse, restricted, universe]
+    suites: [focal-proposed]
+    key-id: C5986B4F1257FFA86632CBA746181433FBB75451
+    url: http://archive.ubuntu.com/ubuntu
+
 parts:
-    # Build LLVM from source to avoid: https://bugs.llvm.org/show_bug.cgi?id=44870
-    llvm-11:
-        plugin: nil
-        build-packages:
-            - git
-            - devscripts
-            - debhelper
-            - cmake
-            - chrpath 
-            - texinfo 
-            - sharutils 
-            - libffi-dev 
-            - libedit-dev 
-            - libncurses5-dev 
-            - swig 
-            - python3-sphinx
-            - binutils-dev
-            - libjsoncpp-dev
-            - pkg-config
-            - lcov
-            - help2man
-            - zlib1g-dev
-            - g++-multilib
-            - libjs-mathjax
-            - python3-recommonmark
-            - doxygen
-            - gfortran
-            - ocaml-nox
-            - ocaml-findlib
-            - libctypes-ocaml-dev
-            - dh-exec
-            - dh-ocaml
-            - libpfm4-dev
-            - libz3-dev
-            - libobjc-7-dev
-        override-build: |
-            git clone https://github.com/llvm/llvm-project -b llvmorg-11.0.0
-            cd llvm-project/
-            mkdir build
-            cd build
-            cmake ../llvm/ -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DLLVM_LIBDIR_SUFFIX=/usr/lib/x86_64-linux-gnu -DLLVM_INSTALL_BINUTILS_SYMLINKS=ON -DLLVM_INSTALL_CCTOOLS_SYMLINKS=ON -DLLVM_INCLUDE_TOOLS=ON -DLLVM_BUILD_TOOLS=ON -DLLVM_ENABLE_THREADS=ON -DLLVM_INCLUDE_TESTS=OFF -DLLVM_BUILD_TESTS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_BUILD_EXAMPLES=OFF -DLLVM_BUILD_BENCHMARKS=OFF -DLLVM_ENABLE_ASSERTIONS=OFF -DLLVM_ENABLE_DOXYGEN=ON -DLLVM_BUILD_DOCS=ON -DLLVM_ENABLE_SPHINX=ON -DBUILD_SHARED_LIBS=OFF -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi"
-            make install
     bcclibs3:
-        after:
-            - llvm-11
         source: https://github.com/iovisor/bcc.git
         source-tag: v0.17.0
         plugin: cmake
-        configflags:
+        cmake-parameters:
             - -DLLVM_DEFINITIONS="-D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS"
             - -DREVISION_LAST=v0.17.0
             - -DBCC_KERNEL_HAS_SOURCE_DIR=1
@@ -89,6 +54,7 @@ parts:
           snapcraftctl pull
           sed -i "s;if os.environ.get('DESTDIR'):;if \"sdist\" not in sys.argv and os.environ.get('DESTDIR'):;" src/python/setup.py.in
         build-packages:
+            - python
             - git
             - libc6
             - iperf
@@ -101,6 +67,14 @@ parts:
             - libelf-dev
             - zlib1g-dev
             - libfl-dev
+            - clang-11
+            - libclang-11-dev
+            - libclang-common-11-dev
+            - libclang1-11
+            - libllvm11
+            - llvm-11
+            - llvm-11-dev
+            - llvm-11-runtime
             - systemtap-sdt-dev
             - netperf
             - python3
@@ -115,23 +89,25 @@ parts:
             - python3-netaddr
             - python3-pyroute2
             - python3-distutils
-    libbpf:
-        after:
-            - bcclibs3
-        plugin: nil
-        override-build: |
-            cd bcc/src/cc/libbpf/src
-            sudo make install
-            sudo ln -s /usr/include/bpf /usr/include/libbpf
+#    libbpf:
+#        after:
+#            - bcclibs3
+#        plugin: nil
+#        override-build: |
+#            cd bcc/src/cc/libbpf/src
+#            sudo make install
+#            sudo ln -s /usr/include/bpf /usr/include/libbpf
     bpftrace:
         after:
-            - libbpf
-        source: https://github.com/iovisor/bpftrace.git
-        source-tag: v0.11.4
+            - bcclibs3
+#            - libbpf
+        source: https://github.com/phvalguima/bpftrace.git
+        source-tag: snap-0.11.4
         plugin: cmake
-        configflags:
+        cmake-parameters:
             - -DCMAKE_BUILD_TYPE=Release
-            - -DLIBBCC_INCLUDE_DIRS=$SNAPCRAFT_STAGE/usr/include/bcc
+            - -DLIBBCC_INCLUDE_DIRS=$SNAPCRAFT_STAGE/usr/include/
+            - -DLIBBCC_LIBRARIES=$SNAPCRAFT_STAGE/usr/lib/x86_64-linux-gnu/libbcc.so
         override-pull: |
             snapcraftctl pull
             description=$(git describe HEAD --tags)
@@ -152,9 +128,14 @@ parts:
           - libfl-dev
           - systemtap-sdt-dev
           - binutils-dev
+          - llvm-11-dev
+          - llvm-11-runtime
+          - libclang-11-dev
+          - clang-11
         stage-packages:
           - libbinutils
-
+          - libclang1-11
+          - libllvm11
 apps:
     bpftrace:
         command: bpftrace
