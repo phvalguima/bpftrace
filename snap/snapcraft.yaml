@@ -50,6 +50,8 @@ parts:
             - -DPYTHON_CMD='python2;python3'
             - -DCMAKE_BUILD_PARALLEL_LEVEL=1
             - -DCMAKE_INSTALL_PREFIX=/usr
+            # https://github.com/ph/bpftrace/issues/1585
+            - -DENABLE_LLVM_SHARED=ON
         override-pull: |
           snapcraftctl pull
           sed -i "s;if os.environ.get('DESTDIR'):;if \"sdist\" not in sys.argv and os.environ.get('DESTDIR'):;" src/python/setup.py.in
@@ -139,6 +141,6 @@ parts:
           - libllvm11
 apps:
     bpftrace:
-        command: bpftrace
+        command: bin/bpftrace
         plugs: [ home, system-trace ]
 
