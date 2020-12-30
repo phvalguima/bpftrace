@@ -108,6 +108,7 @@ parts:
             - -DCMAKE_BUILD_TYPE=Release
             - -DLIBBCC_INCLUDE_DIRS=$SNAPCRAFT_STAGE/usr/include/
             - -DLIBBCC_LIBRARIES=$SNAPCRAFT_STAGE/usr/lib/x86_64-linux-gnu/libbcc.so
+            - -DCMAKE_INSTALL_PREFIX=
         override-pull: |
             snapcraftctl pull
             description=$(git describe HEAD --tags)
