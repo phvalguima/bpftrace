@@ -402,3 +402,12 @@ $ sudo mokutil --disable-validation
 ```
 3. Use the `SysRQ+x` key combination to temporarily lift lockdown (until next
    boot)
+4. Lockdown can be disabled at boot time, by setting boot option on GRUB.
+   On /etc/default/grub, add the following options:
+```
+GRUB_CMDLINE_LINUX= ... lockdown=integrity"
+
+$ sudo update-grub
+$ sudo reboot now
+```
+   That will force lockdown to run in integrity mode instead of confidentiality.

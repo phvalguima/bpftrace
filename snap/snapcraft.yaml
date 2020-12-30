@@ -22,7 +22,7 @@ description: BPFtrace is a high-level tracing language for
   BPF system, as well as existing Linux tracing capabilities like
   kernel dynamic tracing, user-level dynamic tracing and tracepoints.
 
-confinement: strict
+confinement: classic
 grade: stable
 base: core20
 architectures: [amd64, arm64]
