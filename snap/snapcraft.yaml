@@ -3,7 +3,7 @@
 #
 # Using multipass, one should enable a large multipass VM using:
 #
-#   SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY=8G snapcraft
+#   SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY=8G snapcraft --enable-experimental-package-repositories
 #
 # Alternatively, one can build in a lxd container using:
 #
@@ -29,7 +29,7 @@ architectures: [amd64, arm64]
 assumes: [snapd2.37]
 adopt-info: bpftrace
 
-# Needs to add focal-proposed for llvm/clang-11
+# Needed for focal-proposed and llvm/clang-11
 package-repositories:
   - type: apt
     formats: [deb, deb-src]
@@ -91,18 +91,9 @@ parts:
             - python3-netaddr
             - python3-pyroute2
             - python3-distutils
-#    libbpf:
-#        after:
-#            - bcclibs3
-#        plugin: nil
-#        override-build: |
-#            cd bcc/src/cc/libbpf/src
-#            sudo make install
-#            sudo ln -s /usr/include/bpf /usr/include/libbpf
     bpftrace:
         after:
             - bcclibs3
-#            - libbpf
         source: https://github.com/phvalguima/bpftrace.git
         source-tag: snap-0.11.4
         plugin: cmake
