@@ -702,7 +702,7 @@ int main(int argc, char *argv[])
     ksrc = std::get<0>(kdirs);
     kobj = std::get<1>(kdirs);
 
-    if (ksrc != "")
+    if (ksrc != "" && !no_headers)
       extra_flags = get_kernel_cflags(utsname.machine, ksrc, kobj);
   }
   extra_flags.push_back("-include");
